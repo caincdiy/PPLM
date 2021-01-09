@@ -33,8 +33,10 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from tqdm import trange
 from transformers import GPT2Tokenizer
+from transformers import BertTokenizer
 from transformers.file_utils import cached_path
 from transformers.modeling_gpt2 import GPT2LMHeadModel
+from transformers import EncoderDecoderModel
 
 from pplm_classification_head import ClassificationHead
 
@@ -676,7 +678,7 @@ def set_generic_model_params(discrim_weights, discrim_meta):
 
 
 def run_pplm_example(
-        pretrained_model="gpt2-medium",
+        pretrained_model="bert-base-uncased",
         cond_text="",
         uncond=False,
         num_samples=1,
@@ -727,16 +729,24 @@ def run_pplm_example(
                 "to discriminator's = {}".format(discrim, pretrained_model))
 
     # load pretrained model
-    model = GPT2LMHeadModel.from_pretrained(
-        pretrained_model,
-        output_hidden_states=True
-    )
-    model.to(device)
-    model.eval()
+    model = EncoderDecoderModel.from_encoder_decoder_pretrained(pretrained_model,pretrained_model,output_hidden_states=True)
 
     # load tokenizer
-    tokenizer = GPT2Tokenizer.from_pretrained(pretrained_model)
+    tokenizer = BertTokenizer.from_pretrained(pretrained_model)
 
+    model.config.decoder_start_token_id = tokenizer.cls_token_id
+    model.config.eos_token_id = tokenizer.sep_token_id
+    model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.vocab_size=model.config.encoder.vocab_size
+    #model.config.max_length = 256
+    #model.config.min_length = 80
+    model.config.no_repeat_ngram_size = 2
+    model.config.early_stopping = True
+    model.config.length_penalty = 2.0
+    model.config.num_beams = 4
+
+    model.to(device)
+    model.eval()
     # Freeze GPT-2 weights
     for param in model.parameters():
         param.requires_grad = False
