@@ -763,7 +763,7 @@ def run_pplm_example(
             print("Did you forget to add `--cond_text`? ")
             raw_text = input("Model prompt >>> ")
         tokenized_cond_text = tokenizer.encode(
-            tokenizer.bos_token + raw_text,
+            (str(tokenizer.bos_token) + str(raw_text)),
             add_special_tokens=False
         )
 
