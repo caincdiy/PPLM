@@ -733,6 +733,7 @@ def run_pplm_example(
 
     # load tokenizer
     tokenizer = BertTokenizer.from_pretrained(pretrained_model)
+    tokenizer.bos_token='<|endoftext|>'
 
     model.config.decoder_start_token_id = tokenizer.cls_token_id
     model.config.eos_token_id = tokenizer.sep_token_id
@@ -763,7 +764,7 @@ def run_pplm_example(
             print("Did you forget to add `--cond_text`? ")
             raw_text = input("Model prompt >>> ")
         tokenized_cond_text = tokenizer.encode(
-            (str(tokenizer.bos_token) + str(raw_text)),
+            tokenizer.bos_token + raw_text,
             add_special_tokens=False
         )
 
